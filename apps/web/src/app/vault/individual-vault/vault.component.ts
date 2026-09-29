@@ -126,6 +126,7 @@ import {
   openDeleteSharedFolderDialog,
   VaultOrganizationUserNotificationsComponent,
   Vfo1TerminologyService,
+  TotpUsageService,
 } from "@bitwarden/vault";
 import { OrganizationWarningsService } from "@bitwarden/web-vault/app/billing/organizations/warnings/services";
 
@@ -140,7 +141,6 @@ import { AssignCollectionsWebDialogAdapter } from "../components/assign-collecti
 import { VaultItemEvent } from "../components/vault-items/vault-item-event";
 import { VaultItemsComponent } from "../components/vault-items/vault-items.component";
 import { VaultItemsModule } from "../components/vault-items/vault-items.module";
-import { TotpUsageService } from "../services/totp-usage.service";
 import { WebVaultPromptService } from "../services/web-vault-prompt.service";
 
 import { openBulkDeleteDialog } from "./bulk-action-dialogs/bulk-delete-dialog/bulk-delete-dialog.component";

@@ -14,6 +14,7 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { ToastService } from "@bitwarden/components";
 
 import { PasswordRepromptService } from "../../services/password-reprompt.service";
+import { TotpUsageService } from "../../services/totp-usage.service";
 
 import { BankAccountViewComponent } from "./bank-account-view.component";
 
@@ -32,6 +33,7 @@ describe("BankAccountViewComponent", () => {
         { provide: EventCollectionService, useValue: mock<EventCollectionService>({ collect }) },
         { provide: PasswordRepromptService, useValue: mock<PasswordRepromptService>() },
         { provide: TotpService, useValue: mock<TotpService>() },
+        { provide: TotpUsageService, useValue: mock<TotpUsageService>() },
         {
           provide: BillingAccountProfileStateService,
           useValue: mock<BillingAccountProfileStateService>(),

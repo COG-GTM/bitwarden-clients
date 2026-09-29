@@ -15,6 +15,7 @@ import { PassportView } from "@bitwarden/common/vault/models/view/passport.view"
 import { ToastService } from "@bitwarden/components";
 
 import { PasswordRepromptService } from "../../services/password-reprompt.service";
+import { TotpUsageService } from "../../services/totp-usage.service";
 
 import { PassportViewComponent } from "./passport-view.component";
 
@@ -36,6 +37,7 @@ describe("PassportViewComponent", () => {
         { provide: EventCollectionService, useValue: mock<EventCollectionService>({ collect }) },
         { provide: PasswordRepromptService, useValue: mock<PasswordRepromptService>() },
         { provide: TotpService, useValue: mock<TotpService>() },
+        { provide: TotpUsageService, useValue: mock<TotpUsageService>() },
         {
           provide: BillingAccountProfileStateService,
           useValue: mock<BillingAccountProfileStateService>(),
