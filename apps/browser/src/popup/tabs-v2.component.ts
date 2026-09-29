@@ -15,8 +15,10 @@ import {
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { getUserId } from "@bitwarden/common/auth/services/account.service";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
+// eslint-disable-next-line import/order
 import { BottomNavigationButton } from "@bitwarden/components";
-import { SendPolicyService } from "@bitwarden/send-ui";
+// eslint-disable-next-line no-restricted-imports
+import { SendPolicyService } from "../../../../libs/tools/send/send-ui/src/services/send-policy.service";
 
 import { HEALTH_TAB_NAV_BUTTON } from "./health-tab-nav-button";
 

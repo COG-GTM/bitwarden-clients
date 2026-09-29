@@ -8,8 +8,11 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { SshKeyApi } from "@bitwarden/common/vault/models/api/ssh-key.api";
 import { SshKeyData } from "@bitwarden/common/vault/models/data/ssh-key.data";
+// eslint-disable-next-line import/order
 import { DialogService, ToastService } from "@bitwarden/components";
-import { SshKeyPasswordPromptComponent } from "@bitwarden/importer-ui";
+// eslint-disable-next-line import/order, no-restricted-imports
+import { SshKeyPasswordPromptComponent } from "../../../importer/src/components/dialog/sshkey-password-prompt.component";
+// eslint-disable-next-line import/order
 import { import_ssh_key, SshKeyImportError, SshKeyView } from "@bitwarden/sdk-internal";
 
 import { SshImportPromptService } from "./ssh-import-prompt.service";
