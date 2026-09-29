@@ -34,19 +34,33 @@ export class InitService {
 
   init() {
     return async () => {
-      await this.sdkLoadService.loadAndInit();
-      this.unlockService.init();
-      await this.migrationRunner.waitForCompletion(); // Browser background is responsible for migrations
-      await this.i18nService.init();
+      performance.mark("bw:init-start");
+      const timed = async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+        performance.mark(`bw:${name}-start`);
+        try {
+          return await fn();
+        } finally {
+          performance.mark(`bw:${name}-end`);
+        }
+      };
+
+      // PROTOTYPE B step 1: run the independent init steps concurrently instead of serially.
+      await Promise.all([
+        timed("sdk", () => this.sdkLoadService.loadAndInit()).then(() => this.unlockService.init()),
+        timed("migrations", () => this.migrationRunner.waitForCompletion()), // Browser background is responsible for migrations
+        timed("i18n", () => this.i18nService.init()),
+        timed("viewCache", () => this.viewCacheService.init()),
+        timed("size", () => this.sizeService.init()),
+      ]);
       this.twoFactorService.init();
-      await this.viewCacheService.init();
-      await this.sizeService.init();
 
       this.automationDriver.attachToGlobal(self);
 
       const htmlEl = window.document.documentElement;
+      performance.mark("bw:theming-start");
       this.themingService.applyThemeChangesTo(this.document);
       htmlEl.classList.add("locale_" + this.i18nService.translationLocale);
+      performance.mark("bw:theming-end");
 
       // Workaround for slow performance on external monitors on Chrome + MacOS
       // See: https://bugs.chromium.org/p/chromium/issues/detail?id=971701#c64
@@ -62,6 +76,7 @@ export class InitService {
         htmlEl.classList.add("force_redraw");
         this.logService.info("Force redraw is on");
       }
+      performance.mark("bw:init-end");
     };
   }
 }
