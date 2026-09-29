@@ -10278,6 +10278,9 @@
   "verificationCode": {
     "message": "Verification code"
   },
+  "verificationCodes": {
+    "message": "Verification codes"
+  },
   "confirmIdentity": {
     "message": "Confirm your identity to continue."
   },

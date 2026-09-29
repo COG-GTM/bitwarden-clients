@@ -324,7 +324,19 @@ export class VaultFilterComponent implements OnInit, OnDestroy {
           .map((r) => r.cipherType);
 
         const toExclude = [...excludeTypes, ...restrictedForUser];
-        return cipherTypeFilters.filter((f) => !toExclude.includes(f.type));
+        const allowed = cipherTypeFilters.filter((f) => !toExclude.includes(f.type));
+        if (organizationId != null || toExclude.includes(CipherType.Login)) {
+          return allowed;
+        }
+        const verificationCodesFilter: CipherTypeFilter = {
+          id: "verificationCodes",
+          name: this.i18nService.t("verificationCodes"),
+          type: "verificationCodes",
+          icon: "bwi-clock",
+        };
+        const favoritesIndex = allowed.findIndex((f) => f.type === "favorites");
+        allowed.splice(favoritesIndex + 1, 0, verificationCodesFilter);
+        return allowed;
       }),
       switchMap((allowed) => this.vaultFilterService.buildTypeTree(allFilter, allowed)),
       distinctUntilChanged(),

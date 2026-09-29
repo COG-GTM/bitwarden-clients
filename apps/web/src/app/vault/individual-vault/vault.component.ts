@@ -140,6 +140,7 @@ import { AssignCollectionsWebDialogAdapter } from "../components/assign-collecti
 import { VaultItemEvent } from "../components/vault-items/vault-item-event";
 import { VaultItemsComponent } from "../components/vault-items/vault-items.component";
 import { VaultItemsModule } from "../components/vault-items/vault-items.module";
+import { TotpUsageService } from "../services/totp-usage.service";
 import { WebVaultPromptService } from "../services/web-vault-prompt.service";
 
 import { openBulkDeleteDialog } from "./bulk-action-dialogs/bulk-delete-dialog/bulk-delete-dialog.component";
@@ -358,6 +359,7 @@ export class VaultComponent<C extends CipherViewLike> implements OnInit, OnDestr
     private webVaultPromptService: WebVaultPromptService,
     private vaultBatchBarService: VaultBatchBarService<C>,
     private configService: ConfigService,
+    private totpUsageService: TotpUsageService,
   ) {}
 
   async ngOnInit() {
@@ -454,15 +456,21 @@ export class VaultComponent<C extends CipherViewLike> implements OnInit, OnDestr
       ),
     );
 
-    const ciphers$ = combineLatest([allowedCiphers$, filter$, this.currentSearchText$]).pipe(
+    const ciphers$ = combineLatest([
+      allowedCiphers$,
+      filter$,
+      this.currentSearchText$,
+      this.totpUsageService.lastUsedDates$(activeUserId),
+    ]).pipe(
       filter(([ciphers, filter]) => ciphers != undefined && filter != undefined),
-      concatMap(async ([ciphers, filter, searchText]) => {
+      concatMap(async ([ciphers, filter, searchText, totpLastUsedDates]) => {
         const failedCiphers =
           (await firstValueFrom(this.cipherService.failedToDecryptCiphers$(activeUserId))) ?? [];
         const filterFunction = createFilterFunction(filter);
         // Append any failed to decrypt ciphers to the top of the cipher list
         const allCiphers = [...failedCiphers, ...ciphers];
 
+        let filtered: C[];
         if (await this.searchService.isSearchable(searchText)) {
           const results = await this.searchService.searchCiphers<C>(
             activeUserId,
@@ -470,10 +478,17 @@ export class VaultComponent<C extends CipherViewLike> implements OnInit, OnDestr
             searchText,
             allCiphers as C[],
           );
-          return results.filter(filterFunction);
+          filtered = results.filter(filterFunction);
+        } else {
+          filtered = allCiphers.filter(filterFunction) as C[];
         }
 
-        return allCiphers.filter(filterFunction) as C[];
+        if (filter.type === "verificationCodes") {
+          return this.totpUsageService.sortByRecency(filtered, totpLastUsedDates, (cipher) =>
+            uuidAsString(cipher.id),
+          );
+        }
+        return filtered;
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
@@ -1643,6 +1658,8 @@ export class VaultComponent<C extends CipherViewLike> implements OnInit, OnDestr
         uuidAsString(cipher.id),
       );
     } else if (field === "totp") {
+      const userId = await firstValueFrom(getUserId(this.accountService.activeAccount$));
+      await this.totpUsageService.recordUsage(userId, uuidAsString(cipher.id));
       await this.eventCollectionService.collect(
         EventType.Cipher_ClientCopiedHiddenField,
         uuidAsString(cipher.id),

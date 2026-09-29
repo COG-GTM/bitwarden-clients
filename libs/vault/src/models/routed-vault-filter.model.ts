@@ -10,6 +10,7 @@ export type All = typeof All;
 // TODO: Remove `All` when moving to vertical navigation.
 const itemTypes = [
   "favorites",
+  "verificationCodes",
   "login",
   "card",
   "identity",
