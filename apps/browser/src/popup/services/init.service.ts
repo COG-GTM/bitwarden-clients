@@ -8,6 +8,7 @@ import { LogService as LogServiceAbstraction } from "@bitwarden/common/platform/
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
+import { ThemeStateService } from "@bitwarden/common/platform/theming/theme-state.service";
 
 import { ForegroundUnlockService } from "../../key-management/unlock/foreground-unlock.service";
 import BrowserPopupUtils from "../../platform/browser/browser-popup-utils";
@@ -18,6 +19,7 @@ import { PopupViewCacheService } from "../../platform/popup/view-cache/popup-vie
 export class InitService {
   private sizeService = inject(PopupSizeService);
   private automationDriver = inject(AutomationDriver);
+  private themeStateService = inject(ThemeStateService);
 
   constructor(
     private platformUtilsService: PlatformUtilsService,
@@ -34,18 +36,27 @@ export class InitService {
 
   init() {
     return async () => {
+      performance.mark("bw:init-start");
       await this.sdkLoadService.loadAndInit();
+      performance.mark("bw:sdk-loaded");
       this.unlockService.init();
       await this.migrationRunner.waitForCompletion(); // Browser background is responsible for migrations
+      performance.mark("bw:migrations-done");
       await this.i18nService.init();
+      performance.mark("bw:i18n-done");
       this.twoFactorService.init();
       await this.viewCacheService.init();
       await this.sizeService.init();
+      performance.mark("bw:init-done");
 
       this.automationDriver.attachToGlobal(self);
 
       const htmlEl = window.document.documentElement;
       this.themingService.applyThemeChangesTo(this.document);
+      // PROTOTYPE: cache the selected theme so preboot.js can apply it before Angular boots.
+      this.themeStateService.selectedTheme$.subscribe((theme) => {
+        localStorage.setItem("bw-theme", theme);
+      });
       htmlEl.classList.add("locale_" + this.i18nService.translationLocale);
 
       // Workaround for slow performance on external monitors on Chrome + MacOS
