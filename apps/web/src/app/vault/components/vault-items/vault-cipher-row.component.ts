@@ -6,6 +6,7 @@ import {
   EventEmitter,
   HostListener,
   inject,
+  input,
   Input,
   OnInit,
   Output,
@@ -147,6 +148,8 @@ export class VaultCipherRowComponent<C extends CipherViewLike> implements OnInit
   // eslint-disable-next-line @angular-eslint/prefer-output-emitter-ref
   @Output() checkedToggled = new EventEmitter<void>();
 
+  readonly totpLastUsed = input<number>();
+
   private permissionList = getPermissionList();
   // Ordered highest to lowest priority; compared against `CollectionPermission` values (not
   // label ids) so the priority is unaffected by which terminology (VFO1 or legacy) is displayed.
@@ -233,6 +236,30 @@ export class VaultCipherRowComponent<C extends CipherViewLike> implements OnInit
 
   protected get subtitle() {
     return CipherViewLikeUtils.subtitle(this.cipher, this.i18nService);
+  }
+
+  protected get totpLastUsedLabel(): string | undefined {
+    const lastUsed = this.totpLastUsed();
+    if (!lastUsed) {
+      return undefined;
+    }
+
+    const minutes = Math.floor((Date.now() - lastUsed) / 60_000);
+    if (minutes < 1) {
+      return this.i18nService.t("copiedJustNow");
+    }
+
+    const format = new Intl.RelativeTimeFormat(this.i18nService.translationLocale, {
+      numeric: "auto",
+    });
+    const relative =
+      minutes < 60
+        ? format.format(-minutes, "minute")
+        : minutes < 60 * 24
+          ? format.format(-Math.floor(minutes / 60), "hour")
+          : format.format(-Math.floor(minutes / (60 * 24)), "day");
+
+    return this.i18nService.t("copiedTimeAgo", relative);
   }
 
   protected get isDeleted() {

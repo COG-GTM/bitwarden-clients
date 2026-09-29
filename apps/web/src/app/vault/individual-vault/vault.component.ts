@@ -307,6 +307,10 @@ export class VaultComponent<C extends CipherViewLike> implements OnInit, OnDestr
     ),
   );
 
+  protected totpLastUsedDates$ = this.userId$.pipe(
+    switchMap((userId) => this.totpUsageService.lastUsedDates$(userId)),
+  );
+
   protected userCanArchive$ = this.userId$.pipe(
     switchMap((userId) => {
       return this.cipherArchiveService.userCanArchive$(userId);
