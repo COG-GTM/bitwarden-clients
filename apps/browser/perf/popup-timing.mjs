@@ -13,8 +13,11 @@ import { join, resolve } from "node:path";
 
 const label = process.argv[2] ?? "run";
 const runs = Number(process.argv[3] ?? 5);
-const ext = resolve(import.meta.dirname, "../build");
-const profile = mkdtempSync(join(tmpdir(), "bw-popup-perf-"));
+// BW_EXT=<dir> points at an alternate unpacked build (for side-by-side A/B runs).
+const ext = process.env.BW_EXT ?? resolve(import.meta.dirname, "../build");
+// BW_PROFILE=<dir> reuses an existing profile (simulates a returning user: extension already installed, state already migrated).
+const profile = process.env.BW_PROFILE ?? mkdtempSync(join(tmpdir(), "bw-popup-perf-"));
+console.log(`profile: ${profile}`);
 const ctx = await chromium.launchPersistentContext(profile, {
   headless: false,
   args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`],

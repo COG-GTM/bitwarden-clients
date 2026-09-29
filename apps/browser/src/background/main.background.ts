@@ -1852,11 +1852,13 @@ export default class MainBackground {
     // Acquired first so no consumer can observe an empty profile that acquisition would have
     // filled. Pushing before the SDK loads is safe: the profile is mirrored into the SDK handle
     // lazily, once the WASM module is ready. Absent when a dev source supplies the profile instead.
-    await this.managedConfigReader?.init();
-
     const bwPerf = ((self as any).__bwPerf ??= { swStart: Date.now() });
     bwPerf.bootstrapStart = Date.now();
     console.log(`perf: background bootstrap start t=${Date.now()} (+${(performance.now()).toFixed(0)}ms since SW start)`);
+    const managedStart = performance.now();
+    await this.managedConfigReader?.init();
+    bwPerf.managedConfigDone = Date.now();
+    console.log(`perf: background managedConfigReader.init (chrome.storage.managed.get) took ${(performance.now() - managedStart).toFixed(0)}ms (+${(performance.now()).toFixed(0)}ms since SW start)`);
     await this.sdkLoadService.loadAndInit();
     bwPerf.sdkLoaded = Date.now();
     console.log(`perf: background SDK loaded (+${(performance.now()).toFixed(0)}ms since SW start)`);
