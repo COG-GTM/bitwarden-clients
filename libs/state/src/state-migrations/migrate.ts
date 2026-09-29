@@ -1,5 +1,7 @@
+import { filter, Subscription } from "rxjs";
+
 import { LogService } from "@bitwarden/logging";
-import { AbstractStorageService } from "@bitwarden/storage-core";
+import { AbstractStorageService, ObservableStorageService } from "@bitwarden/storage-core";
 
 import { MigrationBuilder } from "./migration-builder";
 import { EverHadUserKeyMigrator } from "./migrations/10-move-ever-had-user-key-to-state-providers";
@@ -202,10 +204,23 @@ export async function currentVersion(
  * @param storageService Disk storage where the `stateVersion` will or is already saved in.
  * @param logService Log service
  */
+export type BwMigrationWaitStrategy = "backoff" | "capped" | "event";
+// Prototype switch: which wait strategy the popup uses while the background runs migrations.
+export const BW_MIGRATION_WAIT_STRATEGY: BwMigrationWaitStrategy = "event";
+
+const perfMark = (name: string) => {
+  if (typeof performance !== "undefined" && typeof performance.mark === "function") {
+    performance.mark(name);
+  }
+};
+
 export async function waitForMigrations(
   storageService: AbstractStorageService,
   logService: LogService,
 ) {
+  perfMark("bw:migrations-wait-start");
+  const started = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const startedEpoch = Date.now();
   const isReady = async () => {
     const version = await currentVersion(storageService, logService);
     // The saved version is what we consider the latest
@@ -216,6 +231,75 @@ export async function waitForMigrations(
     // ready as well and return true in that scenario.
     return version >= CURRENT_VERSION;
   };
+  const done = (how: string) => {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    perfMark("bw:migrations-ready");
+    logService.info(`perf: migration wait resolved via ${how} after ${(now - started).toFixed(0)}ms`);
+  };
+
+  if (await isReady()) {
+    done("immediate");
+    return;
+  }
+
+  if (BW_MIGRATION_WAIT_STRATEGY === "capped") {
+    // Fixed-interval poll with a hard ceiling.
+    const interval = 25;
+    const ceiling = 16_000;
+    let polls = 0;
+    while (Date.now() - startedEpoch < ceiling) {
+      await new Promise((r) => setTimeout(r, interval));
+      polls++;
+      if (await isReady()) {
+        done(`capped poll (${polls} polls @ ${interval}ms)`);
+        return;
+      }
+    }
+    logService.warning("perf: migration wait hit ceiling");
+    done("capped ceiling");
+    return;
+  }
+
+  if (BW_MIGRATION_WAIT_STRATEGY === "event") {
+    const updates$ = (storageService as Partial<ObservableStorageService>).updates$;
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      let sub: Subscription | undefined;
+      let fallback: ReturnType<typeof setInterval> | undefined;
+      let ceiling: ReturnType<typeof setTimeout> | undefined;
+      const finish = (how: string) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        sub?.unsubscribe();
+        if (fallback != null) {
+          clearInterval(fallback);
+        }
+        if (ceiling != null) {
+          clearTimeout(ceiling);
+        }
+        done(how);
+        resolve();
+      };
+      const check = async (how: string) => {
+        if (!settled && (await isReady())) {
+          finish(how);
+        }
+      };
+      if (updates$ != null) {
+        sub = updates$
+          .pipe(filter((u) => u.key === "stateVersion" || u.key === "global"))
+          .subscribe(() => void check("storage.onChanged"));
+      }
+      // Safety net in case the change event is missed (or storage isn't observable).
+      fallback = setInterval(() => void check("fallback poll"), updates$ != null ? 1000 : 50);
+      ceiling = setTimeout(() => finish("event ceiling"), 16_000);
+      // Re-check after subscribing to close the race between the first check and subscribe.
+      void check("post-subscribe recheck");
+    });
+    return;
+  }
 
   const wait = async (time: number) => {
     // Wait exponentially
@@ -237,8 +321,7 @@ export async function waitForMigrations(
     });
   };
 
-  if (!(await isReady())) {
-    // Wait for 2ms to start with
-    await wait(2);
-  }
+  // Wait for 2ms to start with
+  await wait(2);
+  done("exponential backoff");
 }

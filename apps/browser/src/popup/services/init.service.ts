@@ -34,13 +34,19 @@ export class InitService {
 
   init() {
     return async () => {
+      performance.mark("bw:init-start");
       await this.sdkLoadService.loadAndInit();
+      performance.mark("bw:sdk-loaded");
       this.unlockService.init();
       await this.migrationRunner.waitForCompletion(); // Browser background is responsible for migrations
+      performance.mark("bw:migrations-ready");
       await this.i18nService.init();
+      performance.mark("bw:i18n-ready");
       this.twoFactorService.init();
       await this.viewCacheService.init();
+      performance.mark("bw:viewcache-ready");
       await this.sizeService.init();
+      performance.mark("bw:size-ready");
 
       this.automationDriver.attachToGlobal(self);
 
@@ -62,6 +68,7 @@ export class InitService {
         htmlEl.classList.add("force_redraw");
         this.logService.info("Force redraw is on");
       }
+      performance.mark("bw:init-end");
     };
   }
 }

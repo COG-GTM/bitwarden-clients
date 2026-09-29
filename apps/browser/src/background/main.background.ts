@@ -618,6 +618,8 @@ export default class MainBackground {
   private phishingDetectionService: PhishingDetectionService;
 
   constructor() {
+    ((self as any).__bwPerf ??= { swStart: Date.now() }).ctorStart = Date.now();
+    console.log(`perf: background MainBackground ctor start (+${performance.now().toFixed(0)}ms since SW start)`);
     const logoutCallback = async (logoutReason: LogoutReason, userId?: UserId) =>
       await this.logout(logoutReason, userId);
 
@@ -1840,6 +1842,8 @@ export default class MainBackground {
     // Putting this here so that all other services are initialized prior to trying to hook up
     // subscriptions to the notification chrome events.
     this.initNotificationSubscriptions();
+    (self as any).__bwPerf.ctorEnd = Date.now();
+    console.log(`perf: background MainBackground ctor end (+${performance.now().toFixed(0)}ms since SW start)`);
   }
 
   async bootstrap() {
@@ -1850,9 +1854,19 @@ export default class MainBackground {
     // lazily, once the WASM module is ready. Absent when a dev source supplies the profile instead.
     await this.managedConfigReader?.init();
 
+    const bwPerf = ((self as any).__bwPerf ??= { swStart: Date.now() });
+    bwPerf.bootstrapStart = Date.now();
+    console.log(`perf: background bootstrap start t=${Date.now()} (+${(performance.now()).toFixed(0)}ms since SW start)`);
     await this.sdkLoadService.loadAndInit();
+    bwPerf.sdkLoaded = Date.now();
+    console.log(`perf: background SDK loaded (+${(performance.now()).toFixed(0)}ms since SW start)`);
     // Only the "true" background should run migrations
+    const migStart = performance.now();
+    bwPerf.migrationsStart = Date.now();
     await this.migrationRunner.run();
+    bwPerf.migrationsDone = Date.now();
+    console.log(`perf: background migrations done in ${(performance.now() - migStart).toFixed(0)}ms (+${(performance.now()).toFixed(0)}ms since SW start) t=${Date.now()}`);
+    chrome.storage.local.set({ bwPerf });
 
     // This is here instead of in the InitService b/c we don't plan for
     // side effects to run in the Browser InitService.
