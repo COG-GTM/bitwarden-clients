@@ -34,13 +34,18 @@ export class InitService {
 
   init() {
     return async () => {
+      performance.mark("bw:init-start");
       await this.sdkLoadService.loadAndInit();
+      performance.mark("bw:init-sdk-loaded");
       this.unlockService.init();
       await this.migrationRunner.waitForCompletion(); // Browser background is responsible for migrations
+      performance.mark("bw:init-migrations-done");
       await this.i18nService.init();
+      performance.mark("bw:init-i18n-done");
       this.twoFactorService.init();
       await this.viewCacheService.init();
       await this.sizeService.init();
+      performance.mark("bw:init-done");
 
       this.automationDriver.attachToGlobal(self);
 

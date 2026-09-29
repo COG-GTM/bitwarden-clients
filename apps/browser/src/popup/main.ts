@@ -1,4 +1,4 @@
-import { enableProdMode, provideZoneChangeDetection } from "@angular/core";
+import { ApplicationRef, enableProdMode, provideZonelessChangeDetection } from "@angular/core";
 import { platformBrowser } from "@angular/platform-browser";
 
 import { PopupSizeService } from "../platform/popup/layout/popup-size.service";
@@ -19,10 +19,31 @@ if (process.env.ENV === "production") {
   enableProdMode();
 }
 
+// PROTOTYPE instrumentation: count change-detection passes and time spent in them.
+const w = window as any;
+w.__bwCd = 0;
+w.__bwCdMs = 0;
+const origTick = (ApplicationRef.prototype as any)._tick;
+(ApplicationRef.prototype as any)._tick = function (...args: unknown[]) {
+  const t0 = performance.now();
+  w.__bwCd++;
+  try {
+    return origTick.apply(this, args);
+  } finally {
+    w.__bwCdMs += performance.now() - t0;
+    if (w.__bwCd === 1) {
+      performance.mark("bw:first-tick-done");
+    }
+  }
+};
+
 function init() {
-  void platformBrowser().bootstrapModule(AppModule, {
-    applicationProviders: [provideZoneChangeDetection()],
-  });
+  performance.mark("bw:bootstrap-start");
+  void platformBrowser()
+    .bootstrapModule(AppModule, {
+      applicationProviders: [provideZonelessChangeDetection()],
+    })
+    .then(() => performance.mark("bw:bootstrap-done"));
 }
 
 init();
