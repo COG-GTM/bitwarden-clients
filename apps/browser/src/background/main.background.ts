@@ -425,6 +425,8 @@ import IdleBackground from "./idle.background";
 import { NativeMessagingBackground } from "./nativeMessaging.background";
 import RuntimeBackground from "./runtime.background";
 
+const BW_MANAGED_DEFER = true;
+
 export default class MainBackground {
   messagingService: MessageSender;
   storageService: BrowserLocalStorageService;
@@ -618,6 +620,8 @@ export default class MainBackground {
   private phishingDetectionService: PhishingDetectionService;
 
   constructor() {
+    ((self as any).__bwPerf ??= { swStart: Date.now() }).ctorStart = Date.now();
+    console.log(`perf: background MainBackground ctor start (+${performance.now().toFixed(0)}ms since SW start)`);
     const logoutCallback = async (logoutReason: LogoutReason, userId?: UserId) =>
       await this.logout(logoutReason, userId);
 
@@ -1840,6 +1844,8 @@ export default class MainBackground {
     // Putting this here so that all other services are initialized prior to trying to hook up
     // subscriptions to the notification chrome events.
     this.initNotificationSubscriptions();
+    (self as any).__bwPerf.ctorEnd = Date.now();
+    console.log(`perf: background MainBackground ctor end (+${performance.now().toFixed(0)}ms since SW start)`);
   }
 
   async bootstrap() {
@@ -1848,11 +1854,33 @@ export default class MainBackground {
     // Acquired first so no consumer can observe an empty profile that acquisition would have
     // filled. Pushing before the SDK loads is safe: the profile is mirrored into the SDK handle
     // lazily, once the WASM module is ready. Absent when a dev source supplies the profile instead.
-    await this.managedConfigReader?.init();
-
+    const bwPerf = ((self as any).__bwPerf ??= { swStart: Date.now() });
+    bwPerf.bootstrapStart = Date.now();
+    console.log(`perf: background bootstrap start t=${Date.now()} (+${(performance.now()).toFixed(0)}ms since SW start)`);
+    const managedStart = performance.now();
+    // PROTOTYPE VARIANT C (BW_MANAGED_DEFER): kick off the managed-storage read but do not gate
+    // SDK load / migrations / popup message listeners on it; awaited at the end of bootstrap().
+    const managedInit = (this.managedConfigReader?.init() ?? Promise.resolve()).then(() => {
+      bwPerf.managedConfigDone = Date.now();
+      console.log(`perf: background managedConfigReader.init (chrome.storage.managed.get) took ${(performance.now() - managedStart).toFixed(0)}ms (+${(performance.now()).toFixed(0)}ms since SW start)`);
+    });
+    if (!BW_MANAGED_DEFER) {
+      await managedInit;
+    }
     await this.sdkLoadService.loadAndInit();
+    bwPerf.sdkLoaded = Date.now();
+    console.log(`perf: background SDK loaded (+${(performance.now()).toFixed(0)}ms since SW start)`);
     // Only the "true" background should run migrations
+    const migStart = performance.now();
+    bwPerf.migrationsStart = Date.now();
     await this.migrationRunner.run();
+    bwPerf.migrationsDone = Date.now();
+    console.log(`perf: background migrations done in ${(performance.now() - migStart).toFixed(0)}ms (+${(performance.now()).toFixed(0)}ms since SW start) t=${Date.now()}`);
+    chrome.storage.local.set({ bwPerf });
+    if (BW_MANAGED_DEFER) {
+      // Popup-facing listeners come up first; managed profile lands whenever Chrome delivers it.
+      void managedInit.then(() => chrome.storage.local.set({ bwPerf }));
+    }
 
     // This is here instead of in the InitService b/c we don't plan for
     // side effects to run in the Browser InitService.

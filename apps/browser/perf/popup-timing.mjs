@@ -13,8 +13,11 @@ import { join, resolve } from "node:path";
 
 const label = process.argv[2] ?? "run";
 const runs = Number(process.argv[3] ?? 5);
-const ext = resolve(import.meta.dirname, "../build");
-const profile = mkdtempSync(join(tmpdir(), "bw-popup-perf-"));
+// BW_EXT=<dir> points at an alternate unpacked build (for side-by-side A/B runs).
+const ext = process.env.BW_EXT ?? resolve(import.meta.dirname, "../build");
+// BW_PROFILE=<dir> reuses an existing profile (simulates a returning user: extension already installed, state already migrated).
+const profile = process.env.BW_PROFILE ?? mkdtempSync(join(tmpdir(), "bw-popup-perf-"));
+console.log(`profile: ${profile}`);
 const ctx = await chromium.launchPersistentContext(profile, {
   headless: false,
   args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`],
@@ -24,6 +27,11 @@ const sw = ctx.serviceWorkers()[0] ?? (await ctx.waitForEvent("serviceworker", {
 const id = new URL(sw.url()).host;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const results = [];
+const swLogs = [];
+ctx.on("console", (m) => {
+  const t = m.text();
+  if (/perf:/i.test(t)) swLogs.push(t.slice(0, 140));
+});
 
 async function open(i) {
   const page = await ctx.newPage();
@@ -48,10 +56,16 @@ async function open(i) {
   await page.goto(`chrome-extension://${id}/popup/index.html`);
   await page.waitForFunction(() => window.__bw.meaningful != null, null, { timeout: 60000 });
   await sleep(300);
-  const m = await page.evaluate(() => {
+  const m = await page.evaluate(async () => {
     const nav = performance.getEntriesByType("navigation")[0];
     const marks = Object.fromEntries(performance.getEntriesByType("mark").map((e) => [e.name, Math.round(e.startTime)]));
+    // Background (service worker) timeline, written by main.background.ts bootstrap(), re-based onto this popup's time origin.
+    const bwPerf = (await chrome.storage.local.get("bwPerf"))?.bwPerf ?? null;
+    const bg = bwPerf
+      ? Object.fromEntries(Object.entries(bwPerf).filter(([k]) => k !== "swStartPerf").map(([k, v]) => [k, Math.round(v - performance.timeOrigin)]))
+      : null;
     return {
+      bg,
       dcl: Math.round(nav.domContentLoadedEventEnd),
       spinnerGone: Math.round(window.__bw.spinnerGone),
       meaningfulUi: Math.round(window.__bw.meaningful),
@@ -59,7 +73,7 @@ async function open(i) {
       text: document.body.innerText.trim().slice(0, 50).replace(/\s+/g, " "),
     };
   });
-  const row = { label, open: i === 0 ? "A-cold" : `warm-${i}`, ...m, logs };
+  const row = { label, open: i === 0 ? "A-cold" : `warm-${i}`, ...m, logs, swLogs: i === 0 ? [...swLogs] : undefined };
   results.push(row);
   console.log(JSON.stringify(row));
   if (i === 0) await page.screenshot({ path: resolve(import.meta.dirname, `popup-${label}-cold.png`) });
