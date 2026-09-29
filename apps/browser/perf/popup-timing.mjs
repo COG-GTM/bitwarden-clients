@@ -28,10 +28,13 @@ const results = [];
 async function open(i) {
   const page = await ctx.newPage();
   const logs = [];
+  const errors = [];
   page.on("console", (m) => {
     const t = m.text();
     if (/WASM|SDK|migration|perf:/i.test(t)) logs.push(t.slice(0, 90));
+    if (m.type() === "error") errors.push(t.slice(0, 200));
   });
+  page.on("pageerror", (e) => errors.push(String(e.message ?? e).slice(0, 200)));
   await page.addInitScript(() => {
     window.__bw = { spinnerGone: null, meaningful: null };
     const obs = new MutationObserver(() => {
@@ -59,7 +62,7 @@ async function open(i) {
       text: document.body.innerText.trim().slice(0, 50).replace(/\s+/g, " "),
     };
   });
-  const row = { label, open: i === 0 ? "A-cold" : `warm-${i}`, ...m, logs };
+  const row = { label, open: i === 0 ? "A-cold" : `warm-${i}`, ...m, logs, errors };
   results.push(row);
   console.log(JSON.stringify(row));
   if (i === 0) await page.screenshot({ path: resolve(import.meta.dirname, `popup-${label}-cold.png`) });
