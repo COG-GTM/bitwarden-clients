@@ -1,6 +1,7 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import {
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
   DestroyRef,
@@ -72,7 +73,11 @@ import { routerTransition } from "./app-routing.animations";
   templateUrl: "app.component.html",
   standalone: false,
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
+  ngAfterViewInit() {
+    performance.mark("bw:app-root-rendered");
+  }
+
   private compactModeService = inject(PopupCompactModeService);
   private sdkService = inject(SdkService);
 

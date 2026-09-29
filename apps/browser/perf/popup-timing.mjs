@@ -13,7 +13,7 @@ import { join, resolve } from "node:path";
 
 const label = process.argv[2] ?? "run";
 const runs = Number(process.argv[3] ?? 5);
-const ext = resolve(import.meta.dirname, "../build");
+const ext = process.env.BW_EXT_DIR ?? resolve(import.meta.dirname, "../build");
 const profile = mkdtempSync(join(tmpdir(), "bw-popup-perf-"));
 const ctx = await chromium.launchPersistentContext(profile, {
   headless: false,
@@ -45,7 +45,7 @@ async function open(i) {
       obs.observe(document.documentElement, { childList: true, subtree: true, characterData: true }),
     );
   });
-  await page.goto(`chrome-extension://${id}/popup/index.html`);
+  await page.goto(`chrome-extension://${id}/popup/index.html${process.env.BW_ROUTE ? "#" + process.env.BW_ROUTE : ""}`);
   await page.waitForFunction(() => window.__bw.meaningful != null, null, { timeout: 60000 });
   await sleep(300);
   const m = await page.evaluate(() => {
@@ -56,6 +56,9 @@ async function open(i) {
       spinnerGone: Math.round(window.__bw.spinnerGone),
       meaningfulUi: Math.round(window.__bw.meaningful),
       marks,
+      cdPasses: window.__bwCd ?? null,
+      cdMs: window.__bwCdMs != null ? Math.round(window.__bwCdMs) : null,
+      zone: typeof window.Zone !== "undefined",
       text: document.body.innerText.trim().slice(0, 50).replace(/\s+/g, " "),
     };
   });
