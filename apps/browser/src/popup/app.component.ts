@@ -126,6 +126,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    performance.mark("bw:app-root-init");
     initPopupClosedListener();
 
     this.compactModeService.init();

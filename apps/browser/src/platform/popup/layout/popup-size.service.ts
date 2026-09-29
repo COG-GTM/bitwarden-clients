@@ -66,17 +66,33 @@ export class PopupSizeService {
     const availHeight =
       screenAvailHeight < MAX_EXT_HEIGHT ? screenAvailHeight : extensionInnerHeight;
 
+    let cls: string | null = null;
     if (!BrowserPopupUtils.inPopup(window) || isInChromeTab) {
-      window.document.documentElement.classList.add("body-full");
+      cls = "body-full";
     } else if (availHeight < 300) {
-      window.document.documentElement.classList.add("body-3xs");
+      cls = "body-3xs";
     } else if (availHeight < 400) {
-      window.document.documentElement.classList.add("body-xxs");
+      cls = "body-xxs";
     } else if (availHeight < 500) {
-      window.document.documentElement.classList.add("body-xs");
+      cls = "body-xs";
     } else if (availHeight < 600) {
-      window.document.documentElement.classList.add("body-sm");
+      cls = "body-sm";
     }
+    // PROTOTYPE: preboot.js applies the cached class before Angular boots; drop any stale one and refresh the cache.
+    const htmlEl = window.document.documentElement;
+    for (const c of Array.from(htmlEl.classList)) {
+      if (c.startsWith("body-") && c !== cls) {
+        htmlEl.classList.remove(c);
+      }
+    }
+    const cacheKey = "bw-height-class:" + window.location.search;
+    if (cls != null) {
+      htmlEl.classList.add(cls);
+      localStorage.setItem(cacheKey, cls);
+    } else {
+      localStorage.removeItem(cacheKey);
+    }
+    performance.mark("bw:height-applied");
   }
 
   private static async setStyle(width: PopupWidthOption) {

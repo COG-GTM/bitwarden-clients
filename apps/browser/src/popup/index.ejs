@@ -5,10 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bitwarden</title>
     <base href="" />
+    <script src="../popup/preboot.js"></script>
+    <style>
+      /* PROTOTYPE static shell — painted before Angular boots, removed by preboot.js on first route render. */
+      #bw-shell{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;
+        font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;background:#f3f6f9;color:#1b2029;overflow:hidden}
+      .theme_dark #bw-shell{background:#121a27;color:#f3f6f9}
+      #bw-shell .sk{background:rgba(27,32,41,.09);border-radius:6px}
+      .theme_dark #bw-shell .sk{background:rgba(243,246,249,.12)}
+      #bw-shell .hdr{display:flex;align-items:center;justify-content:space-between;height:61px;padding:12px 24px 12px 16px;flex:none}
+      #bw-shell .logo{width:128px;height:20px;display:block}
+      #bw-shell .logo path{fill:#175ddc}
+      .theme_dark #bw-shell .logo path{fill:#fff}
+      #bw-shell .icon{width:32px;height:32px;border-radius:12px}
+      #bw-shell .body{flex:1;display:flex;flex-direction:column;padding:12px 24px;gap:12px}
+      #bw-shell .card{background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+      .theme_dark #bw-shell .card{background:#202733}
+      #bw-shell .btn{height:40px;border-radius:12px;background:#175ddc;opacity:.9}
+      .theme_dark #bw-shell .btn{background:#65abff}
+      #bw-shell .btn.sec{background:transparent;border:1px solid rgba(27,32,41,.25)}
+      .theme_dark #bw-shell .btn.sec{border-color:rgba(243,246,249,.3)}
+      #bw-shell .title{align-self:center;height:20px;width:70%}
+      #bw-shell .line{height:12px}
+      [data-bw-shell="promo"] #bw-shell .body{padding-top:0}
+      /* vault: title + search + list + bottom tabs */
+      #bw-shell .vhdr{display:flex;align-items:center;justify-content:space-between;padding:12px 4px 12px 16px;background:#fff;border-bottom:1px solid rgba(27,32,41,.12);flex:none}
+      .theme_dark #bw-shell .vhdr{background:#202733;border-color:rgba(243,246,249,.12)}
+      #bw-shell .vtitle{height:20px;width:64px}
+      #bw-shell .vicons{display:flex;gap:8px;margin-right:4px}
+      #bw-shell .search{height:36px;border-radius:9999px;background:#fff;border:1px solid rgba(27,32,41,.2)}
+      .theme_dark #bw-shell .search{background:#2f343d;border-color:rgba(243,246,249,.2)}
+      #bw-shell .list{background:#fff;border-radius:12px;overflow:hidden}
+      .theme_dark #bw-shell .list{background:#202733}
+      #bw-shell .row{display:flex;align-items:center;gap:12px;height:54px;padding:0 12px;border-bottom:1px solid rgba(27,32,41,.08)}
+      #bw-shell .row .ic{width:24px;height:24px;border-radius:6px;flex:none}
+      #bw-shell .row .tx{flex:1;display:flex;flex-direction:column;gap:6px}
+      #bw-shell .tabs{flex:none;height:60px;display:flex;justify-content:space-around;align-items:center;background:#fff;border-top:1px solid rgba(27,32,41,.12)}
+      .theme_dark #bw-shell .tabs{background:#202733;border-color:rgba(243,246,249,.12)}
+      #bw-shell .tab{width:44px;height:36px;border-radius:8px}
+      #bw-shell [data-k]{display:none}
+      [data-bw-shell="anon"] #bw-shell [data-k="anon"],[data-bw-shell="promo"] #bw-shell [data-k="anon"],[data-bw-shell="vault"] #bw-shell [data-k="vault"]{display:flex}
+      [data-bw-shell="vault"] #bw-shell [data-k="anon"]{display:none}
+      [data-bw-shell="vault"] #bw-shell > .hdr{display:none}
+    </style>
   </head>
   <body>
+    <div id="bw-shell" aria-hidden="true">
+      <div class="hdr">
+        <svg class="logo" viewBox="0 0 290 45" xmlns="http://www.w3.org/2000/svg"><%= htmlWebpackPlugin.options.bwLogoPaths %></svg>
+        <div class="icon sk"></div>
+      </div>
+      <div class="body" data-k="anon">
+        <div class="card">
+          <div class="sk line" style="width:40%"></div>
+          <div class="sk" style="height:36px"></div>
+          <div class="sk line" style="width:40%"></div>
+          <div class="sk" style="height:36px"></div>
+          <div class="btn"></div>
+        </div>
+        <div class="sk title"></div>
+        <div class="sk line" style="width:55%;align-self:center"></div>
+        <div style="flex:1"></div>
+        <div class="btn"></div>
+        <div class="btn sec"></div>
+      </div>
+      <div class="body" data-k="vault" style="padding:0;gap:0">
+        <div class="vhdr"><div class="sk vtitle"></div><div class="vicons"><div class="icon sk"></div><div class="icon sk"></div><div class="icon sk"></div></div></div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:12px;flex:1;overflow:hidden">
+          <div style="display:flex;gap:4px;align-items:center"><div class="search" style="flex:1"></div><div class="icon sk"></div></div>
+          <div class="list">
+            <div class="row"><div class="ic sk"></div><div class="tx"><div class="sk line" style="width:55%"></div><div class="sk line" style="width:35%;height:10px"></div></div><div class="icon sk"></div></div>
+            <div class="row"><div class="ic sk"></div><div class="tx"><div class="sk line" style="width:45%"></div><div class="sk line" style="width:30%;height:10px"></div></div><div class="icon sk"></div></div>
+            <div class="row"><div class="ic sk"></div><div class="tx"><div class="sk line" style="width:60%"></div><div class="sk line" style="width:40%;height:10px"></div></div><div class="icon sk"></div></div>
+            <div class="row"><div class="ic sk"></div><div class="tx"><div class="sk line" style="width:50%"></div><div class="sk line" style="width:25%;height:10px"></div></div><div class="icon sk"></div></div>
+            <div class="row"><div class="ic sk"></div><div class="tx"><div class="sk line" style="width:65%"></div><div class="sk line" style="width:35%;height:10px"></div></div><div class="icon sk"></div></div>
+            <div class="row" style="border-bottom:0"><div class="ic sk"></div><div class="tx"><div class="sk line" style="width:40%"></div><div class="sk line" style="width:30%;height:10px"></div></div><div class="icon sk"></div></div>
+          </div>
+        </div>
+        <div class="tabs"><div class="tab sk"></div><div class="tab sk"></div><div class="tab sk"></div><div class="tab sk"></div></div>
+      </div>
+    </div>
     <app-root>
-      <div id="loading"><i class="bwi bwi-spinner bwi-spin bwi-3x" aria-hidden="true"></i></div>
+      <div id="loading"></div>
     </app-root>
   </body>
 </html>

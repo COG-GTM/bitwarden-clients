@@ -168,6 +168,7 @@ module.exports.buildConfig = function buildConfig(params) {
       filename: "popup/index.html",
       chunks: ["popup/polyfills", "popup/vendor-angular", "popup/vendor", "popup/main"],
       browser: browser,
+      bwLogoPaths: require("fs").readFileSync(path.resolve(__dirname, "webpack/bw-logo-paths.txt"), "utf8"),
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "src/autofill/notification/bar.html"),
@@ -258,6 +259,7 @@ module.exports.buildConfig = function buildConfig(params) {
 
     entry: {
       "popup/polyfills": path.resolve(__dirname, "src/popup/polyfills.ts"),
+      "popup/preboot": path.resolve(__dirname, "src/popup/preboot.ts"),
       "popup/main": params.popup.entry,
       "content/trigger-autofill-script-injection": path.resolve(
         __dirname,
