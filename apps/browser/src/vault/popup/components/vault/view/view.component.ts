@@ -37,6 +37,7 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { CipherAuthorizationService } from "@bitwarden/common/vault/services/cipher-authorization.service";
 import { CipherViewLikeUtils } from "@bitwarden/common/vault/utils/cipher-view-like-utils";
 import { filterOutNullish } from "@bitwarden/common/vault/utils/observable-utilities";
+// eslint-disable-next-line import/order
 import {
   AsyncActionsModule,
   ButtonModule,
@@ -47,7 +48,9 @@ import {
   SearchModule,
   ToastService,
 } from "@bitwarden/components";
-import { ShareButtonComponent } from "@bitwarden/tools-share";
+// eslint-disable-next-line import/order, no-restricted-imports
+import { ShareButtonComponent } from "../../../../../../../../libs/tools/share/src/components/share-button/share-button.component";
+// eslint-disable-next-line import/order
 import {
   ArchiveCipherUtilitiesService,
   CipherViewComponent,

@@ -163,6 +163,17 @@ module.exports.buildConfig = function buildConfig(params) {
   ];
 
   const plugins = [
+    // PROTOTYPE: the popup only waits for state migrations, it never runs them. Replace the
+    // migrate.ts module (which statically imports all ~80 migrators) with a wait-only stub in
+    // the popup/content compilation. The MV3 background is a separate compilation and keeps the real one.
+    ...(manifestVersion === 3
+      ? [
+          new webpack.NormalModuleReplacementPlugin(
+            /state-migrations[\\/]migrate\.ts$/,
+            path.resolve(__dirname, "src/popup/perf/migrate-wait-only.ts"),
+          ),
+        ]
+      : []),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "src/popup/index.ejs"),
       filename: "popup/index.html",

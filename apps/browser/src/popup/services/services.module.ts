@@ -153,13 +153,15 @@ import { TotpService as TotpServiceAbstraction } from "@bitwarden/common/vault/a
 import { DefaultCipherArchiveService } from "@bitwarden/common/vault/services/default-cipher-archive.service";
 import { RestrictedItemTypesService } from "@bitwarden/common/vault/services/restricted-item-types.service";
 import { TotpService } from "@bitwarden/common/vault/services/totp.service";
+// eslint-disable-next-line import/order
 import {
   AnonLayoutWrapperDataService,
   CompactModeService,
   DialogService,
   ToastService,
 } from "@bitwarden/components";
-import { GeneratorServicesModule } from "@bitwarden/generator-components";
+// eslint-disable-next-line import/order, no-restricted-imports
+import { GeneratorServicesModule } from "../../../../../libs/tools/generator/components/src/generator-services.module";
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/generator-legacy";
 import {
   BiometricsService,
@@ -186,8 +188,12 @@ import {
 } from "@bitwarden/legacy-crypto";
 import { FlightRecorderLogRecorderService } from "@bitwarden/logging-angular";
 import { DerivedStateProvider, GlobalStateProvider, StateProvider } from "@bitwarden/state";
+// eslint-disable-next-line import/order
 import { InlineDerivedStateProvider } from "@bitwarden/state-internal";
-import { SHARE_ITEM_PRESENTER, SHARE_PASSWORD_REPROMPT } from "@bitwarden/tools-share";
+// eslint-disable-next-line import/order, no-restricted-imports
+import { SHARE_ITEM_PRESENTER } from "../../../../../libs/tools/share/src/tokens/share-item-presenter.token";
+// eslint-disable-next-line import/order, no-restricted-imports
+import { SHARE_PASSWORD_REPROMPT } from "../../../../../libs/tools/share/src/tokens/share-password-reprompt.token";
 import {
   AutoUnlockService,
   ForegroundLockService,

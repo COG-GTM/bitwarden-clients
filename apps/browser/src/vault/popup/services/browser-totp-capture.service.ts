@@ -1,5 +1,4 @@
 import { Injectable } from "@angular/core";
-import qrcodeParser from "qrcode-parser";
 
 import { TotpCaptureService } from "@bitwarden/vault";
 
@@ -14,6 +13,7 @@ import BrowserPopupUtils from "../../../platform/browser/browser-popup-utils";
 export class BrowserTotpCaptureService implements TotpCaptureService {
   async captureTotpSecret() {
     const screenshot = await BrowserApi.captureVisibleTab();
+    const { default: qrcodeParser } = await import("qrcode-parser");
     const data = await qrcodeParser(screenshot);
     const url = new URL(data.toString());
     if (url.protocol === "otpauth:" && url.searchParams.has("secret")) {

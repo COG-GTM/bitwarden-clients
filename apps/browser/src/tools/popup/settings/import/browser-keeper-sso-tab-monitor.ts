@@ -1,6 +1,10 @@
 import { Injectable } from "@angular/core";
 
-import { isSsoCallbackUrl, KeeperSsoTabMonitor } from "@bitwarden/importer-ui";
+// eslint-disable-next-line import/order, no-restricted-imports
+import {
+  isSsoCallbackUrl,
+  KeeperSsoTabMonitor,
+} from "../../../../../../../libs/importer/src/components/keeper/services/keeper-sso-tab-monitor";
 
 import { BrowserApi } from "../../../../platform/browser/browser-api";
 

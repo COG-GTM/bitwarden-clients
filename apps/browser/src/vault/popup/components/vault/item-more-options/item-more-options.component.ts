@@ -24,6 +24,7 @@ import {
   CipherViewLike,
   CipherViewLikeUtils,
 } from "@bitwarden/common/vault/utils/cipher-view-like-utils";
+// eslint-disable-next-line import/order
 import {
   DialogService,
   IconButtonModule,
@@ -32,7 +33,9 @@ import {
   ToastService,
   IconModule,
 } from "@bitwarden/components";
-import { ShareLinkMenuItemDirective } from "@bitwarden/tools-share";
+// eslint-disable-next-line import/order, no-restricted-imports
+import { ShareLinkMenuItemDirective } from "../../../../../../../../libs/tools/share/src/components/share-link-menu-item/share-link-menu-item.directive";
+// eslint-disable-next-line import/order
 import { PasswordRepromptService, Vfo1I18nPipe } from "@bitwarden/vault";
 
 import { VaultPopupAutofillService } from "../../../services/vault-popup-autofill.service";

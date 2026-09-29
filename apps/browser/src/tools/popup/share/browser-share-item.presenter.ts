@@ -1,8 +1,10 @@
 import { inject, Injectable } from "@angular/core";
 import { Router } from "@angular/router";
 
+// eslint-disable-next-line import/order
 import { CipherViewLike } from "@bitwarden/common/vault/utils/cipher-view-like-utils";
-import { ShareItemPresenter } from "@bitwarden/tools-share";
+// eslint-disable-next-line no-restricted-imports
+import { ShareItemPresenter } from "../../../../../../libs/tools/share/src/tokens/share-item-presenter.token";
 
 /**
  * Presents sharing on the extension's own page. The popup has no room for a drawer or a dialog

@@ -11,6 +11,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { UserVerificationDialogComponent } from "@bitwarden/auth/angular";
+// eslint-disable-next-line import/order
 import {
   DialogModule,
   AvatarModule,
@@ -20,13 +21,11 @@ import {
   CalloutModule,
   LinkModule,
 } from "@bitwarden/components";
-import { KEEPER_SSO_TAB_MONITOR } from "@bitwarden/importer-ui";
+// eslint-disable-next-line import/order, no-restricted-imports
+import { KEEPER_SSO_TAB_MONITOR } from "../../../../libs/importer/src/components/keeper/services/keeper-sso-tab-monitor";
 
 import { AccountComponent } from "../auth/popup/account-switching/account.component";
 import { CurrentAccountComponent } from "../auth/popup/account-switching/current-account.component";
-import { AccountSecurityComponent } from "../auth/popup/settings/account-security.component";
-import { AutofillComponent } from "../autofill/popup/settings/autofill.component";
-import { NotificationsSettingsComponent } from "../autofill/popup/settings/notifications.component";
 import { PopOutComponent } from "../platform/popup/components/pop-out.component";
 import { PopupFocusWrapDirective } from "../platform/popup/components/popup-focus-wrap.directive";
 import { PopupFooterComponent } from "../platform/popup/layout/popup-footer.component";
@@ -48,8 +47,6 @@ import "../platform/popup/locales";
   imports: [
     A11yModule,
     AppRoutingModule,
-    AutofillComponent,
-    AccountSecurityComponent,
     ToastModule.forRoot({
       maxOpened: 2,
       autoDismiss: true,
@@ -70,7 +67,6 @@ import "../platform/popup/locales";
     AvatarModule,
     AccountComponent,
     ButtonModule,
-    NotificationsSettingsComponent,
     PopOutComponent,
     PopupFocusWrapDirective,
     PopupPageComponent,
