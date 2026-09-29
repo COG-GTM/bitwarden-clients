@@ -37,15 +37,11 @@
       {{ cipher.name }}
     </button>
     @if (totpLastUsedLabel; as label) {
-      <span
-        bitBadge
-        variant="info"
-        class="tw-ml-2 tw-shrink-0"
-        [bitTooltip]="totpLastUsed() | date: 'medium'"
-        appStopProp
-      >
-        <bit-icon name="bwi-clock" />
-        {{ label }}
+      <span class="tw-ml-2 tw-shrink-0" [bitTooltip]="totpLastUsed() | date: 'medium'" appStopProp>
+        <span bitBadge variant="info" [truncate]="false">
+          <bit-icon name="bwi-clock" />
+          {{ label }}
+        </span>
       </span>
     }
     @if (hasAttachments) {
