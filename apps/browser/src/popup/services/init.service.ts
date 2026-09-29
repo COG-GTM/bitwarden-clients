@@ -44,9 +44,14 @@ export class InitService {
         }
       };
 
-      // PROTOTYPE B step 1: run the independent init steps concurrently instead of serially.
+      // PROTOTYPE B step 2: do NOT block the app initializer on the WASM SDK. Kick it off and let
+      // consumers gate on SdkLoadService.Ready (DefaultSdkService / legacy-crypto already do).
+      const sdkReady = timed("sdk", () => this.sdkLoadService.loadAndInit()).then(() =>
+        this.unlockService.init(),
+      );
+      void sdkReady;
+      // PROTOTYPE B step 1: run the remaining independent init steps concurrently instead of serially.
       await Promise.all([
-        timed("sdk", () => this.sdkLoadService.loadAndInit()).then(() => this.unlockService.init()),
         timed("migrations", () => this.migrationRunner.waitForCompletion()), // Browser background is responsible for migrations
         timed("i18n", () => this.i18nService.init()),
         timed("viewCache", () => this.viewCacheService.init()),
