@@ -425,6 +425,8 @@ import IdleBackground from "./idle.background";
 import { NativeMessagingBackground } from "./nativeMessaging.background";
 import RuntimeBackground from "./runtime.background";
 
+const BW_MANAGED_DEFER = true;
+
 export default class MainBackground {
   messagingService: MessageSender;
   storageService: BrowserLocalStorageService;
@@ -1856,9 +1858,15 @@ export default class MainBackground {
     bwPerf.bootstrapStart = Date.now();
     console.log(`perf: background bootstrap start t=${Date.now()} (+${(performance.now()).toFixed(0)}ms since SW start)`);
     const managedStart = performance.now();
-    await this.managedConfigReader?.init();
-    bwPerf.managedConfigDone = Date.now();
-    console.log(`perf: background managedConfigReader.init (chrome.storage.managed.get) took ${(performance.now() - managedStart).toFixed(0)}ms (+${(performance.now()).toFixed(0)}ms since SW start)`);
+    // PROTOTYPE VARIANT C (BW_MANAGED_DEFER): kick off the managed-storage read but do not gate
+    // SDK load / migrations / popup message listeners on it; awaited at the end of bootstrap().
+    const managedInit = (this.managedConfigReader?.init() ?? Promise.resolve()).then(() => {
+      bwPerf.managedConfigDone = Date.now();
+      console.log(`perf: background managedConfigReader.init (chrome.storage.managed.get) took ${(performance.now() - managedStart).toFixed(0)}ms (+${(performance.now()).toFixed(0)}ms since SW start)`);
+    });
+    if (!BW_MANAGED_DEFER) {
+      await managedInit;
+    }
     await this.sdkLoadService.loadAndInit();
     bwPerf.sdkLoaded = Date.now();
     console.log(`perf: background SDK loaded (+${(performance.now()).toFixed(0)}ms since SW start)`);
@@ -1869,6 +1877,10 @@ export default class MainBackground {
     bwPerf.migrationsDone = Date.now();
     console.log(`perf: background migrations done in ${(performance.now() - migStart).toFixed(0)}ms (+${(performance.now()).toFixed(0)}ms since SW start) t=${Date.now()}`);
     chrome.storage.local.set({ bwPerf });
+    if (BW_MANAGED_DEFER) {
+      // Popup-facing listeners come up first; managed profile lands whenever Chrome delivers it.
+      void managedInit.then(() => chrome.storage.local.set({ bwPerf }));
+    }
 
     // This is here instead of in the InitService b/c we don't plan for
     // side effects to run in the Browser InitService.
