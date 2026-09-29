@@ -64,6 +64,9 @@
       [showBulkAddToCollections]="true"
       [userCanArchive]="userCanArchive$ | async"
       [enforceOrgDataOwnershipPolicy]="enforceOrgDataOwnershipPolicy$ | async"
+      [totpLastUsedDates]="
+        filter.type === 'verificationCodes' ? (totpLastUsedDates$ | async) : undefined
+      "
       (onEvent)="onVaultItemsEvent($event)"
     >
     </app-vault-items>

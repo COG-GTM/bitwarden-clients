@@ -12,6 +12,7 @@ export {
   CopyFieldAction,
 } from "./services/copy-cipher-field.service";
 export { CopyCipherFieldDirective } from "./components/copy-cipher-field.directive";
+export { TotpUsageService, TotpLastUsedDates } from "./services/totp-usage.service";
 export {
   VaultCopyButtonsService,
   CopyButtonDisplayMode,

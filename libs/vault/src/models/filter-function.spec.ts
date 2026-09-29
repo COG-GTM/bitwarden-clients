@@ -122,6 +122,29 @@ describe("createFilter", () => {
     });
   });
 
+  describe("given the verification codes filter", () => {
+    const filterFunction = createFilterFunction({ type: "verificationCodes" });
+
+    it("should return true for a login with a totp secret", () => {
+      const cipher = createCipher({ type: CipherType.Login });
+      cipher.login.totp = "JBSWY3DPEHPK3PXP";
+
+      expect(filterFunction(cipher)).toBe(true);
+    });
+
+    it("should return false for a login without a totp secret", () => {
+      const cipher = createCipher({ type: CipherType.Login });
+
+      expect(filterFunction(cipher)).toBe(false);
+    });
+
+    it("should return false for a non-login cipher", () => {
+      const cipher = createCipher({ type: CipherType.Card });
+
+      expect(filterFunction(cipher)).toBe(false);
+    });
+  });
+
   describe("given a cipher with folder id", () => {
     it("should return true when filter matches folder id", () => {
       const cipher = createCipher({ folderId: "folderId" });

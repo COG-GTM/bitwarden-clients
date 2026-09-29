@@ -17,6 +17,9 @@ export function createFilterFunction(filter: RoutedVaultFilterModel): FilterFunc
     if (filter.type === "favorites" && !cipher.favorite) {
       return false;
     }
+    if (filter.type === "verificationCodes" && !CipherViewLikeUtils.getLogin(cipher)?.totp) {
+      return false;
+    }
     if (filter.type === "card" && type !== CipherType.Card) {
       return false;
     }

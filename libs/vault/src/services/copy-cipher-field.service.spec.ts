@@ -12,7 +12,7 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { LoginView } from "@bitwarden/common/vault/models/view/login.view";
 import { ToastService } from "@bitwarden/components";
 
-import { CopyAction, CopyCipherFieldService, PasswordRepromptService } from "..";
+import { CopyAction, CopyCipherFieldService, PasswordRepromptService, TotpUsageService } from "..";
 
 describe("CopyCipherFieldService", () => {
   let service: CopyCipherFieldService;
@@ -24,6 +24,7 @@ describe("CopyCipherFieldService", () => {
   let i18nService: MockProxy<I18nService>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
   let accountService: MockProxy<AccountService>;
+  let totpUsageService: MockProxy<TotpUsageService>;
   const userId = "userId";
 
   beforeEach(() => {
@@ -35,6 +36,7 @@ describe("CopyCipherFieldService", () => {
     i18nService = mock<I18nService>();
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
     accountService = mock<AccountService>();
+    totpUsageService = mock<TotpUsageService>();
 
     accountService.activeAccount$ = of({ id: userId } as Account);
 
@@ -47,6 +49,7 @@ describe("CopyCipherFieldService", () => {
       i18nService,
       billingAccountProfileStateService,
       accountService,
+      totpUsageService,
     );
   });
 
@@ -145,6 +148,16 @@ describe("CopyCipherFieldService", () => {
         expect(billingAccountProfileStateService.hasPremiumFromAnySource$).toHaveBeenCalledWith(
           userId,
         );
+      });
+
+      it("should record the verification code usage", async () => {
+        cipher.id = "cipher-id";
+        cipher.organizationUseTotp = true;
+        totpService.getCode$.mockReturnValue(of({ code: "123456", period: 30 }));
+
+        await service.copy(valueToCopy, actionType, cipher, skipReprompt);
+
+        expect(totpUsageService.recordUsage).toHaveBeenCalledWith(userId, "cipher-id");
       });
 
       it("should get TOTP code when allowed from organization", async () => {

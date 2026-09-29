@@ -192,6 +192,7 @@
             (onEvent)="event($event)"
             [userCanArchive]="userCanArchive"
             [enforceOrgDataOwnershipPolicy]="enforceOrgDataOwnershipPolicy"
+            [totpLastUsed]="totpLastUsedDates()?.[item.cipher.id]"
           ></tr>
         }
       </ng-container>

@@ -1,7 +1,7 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { SelectionModel } from "@angular/cdk/collections";
-import { Component, EventEmitter, Input, Output, inject } from "@angular/core";
+import { Component, EventEmitter, Input, Output, inject, input } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   Observable,
@@ -35,6 +35,7 @@ import { OrganizationId } from "@bitwarden/sdk-internal";
 import {
   compareVaultItems,
   RoutedVaultFilterService,
+  TotpLastUsedDates,
   VaultBatchBarService,
   VaultCopyButtonsService,
   VaultItem,
@@ -127,6 +128,8 @@ export class VaultItemsComponent<C extends CipherViewLike> {
   // FIXME(https://bitwarden.atlassian.net/browse/CL-903): Migrate to Signals
   // eslint-disable-next-line @angular-eslint/prefer-signals
   @Input() enforceOrgDataOwnershipPolicy: boolean;
+
+  readonly totpLastUsedDates = input<TotpLastUsedDates>();
 
   private _ciphers?: C[] = [];
   // FIXME(https://bitwarden.atlassian.net/browse/CL-903): Migrate to Signals

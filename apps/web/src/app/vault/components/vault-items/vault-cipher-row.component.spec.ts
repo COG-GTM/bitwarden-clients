@@ -62,7 +62,7 @@ describe("VaultCipherRowComponent", () => {
         ShareLinkMenuItemDirective,
       ],
       providers: [
-        { provide: I18nService, useValue: { t: (key: string) => key } },
+        { provide: I18nService, useValue: { t: (key: string) => key, translationLocale: "en" } },
         {
           provide: EnvironmentService,
           useValue: { environment$: new BehaviorSubject({}).asObservable() },
@@ -145,6 +145,39 @@ describe("VaultCipherRowComponent", () => {
       component.organizations = [];
 
       expect(component["showAssignToCollections"]).toBeFalsy();
+    });
+  });
+  describe("totpLastUsedLabel", () => {
+    const now = new Date("2026-01-01T12:00:00Z").getTime();
+
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(now);
+      const i18nService = TestBed.inject(I18nService);
+      i18nService.t = jest.fn((key: string, value?: string) => (value ? `${key}:${value}` : key));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("is undefined when the code has not been copied", () => {
+      expect(component["totpLastUsedLabel"]).toBeUndefined();
+    });
+
+    it("shows just now for copies within the last minute", () => {
+      fixture.componentRef.setInput("totpLastUsed", now - 30_000);
+
+      expect(component["totpLastUsedLabel"]).toBe("copiedJustNow");
+    });
+
+    it.each([
+      [5 * 60_000, "5 minutes ago"],
+      [3 * 60 * 60_000, "3 hours ago"],
+      [2 * 24 * 60 * 60_000, "2 days ago"],
+    ])("shows a relative time for a copy %dms ago", (elapsed, expected) => {
+      fixture.componentRef.setInput("totpLastUsed", now - elapsed);
+
+      expect(component["totpLastUsedLabel"]).toBe(`copiedTimeAgo:${expected}`);
     });
   });
 });

@@ -10278,6 +10278,21 @@
   "verificationCode": {
     "message": "Verification code"
   },
+  "verificationCodes": {
+    "message": "Verification codes"
+  },
+  "copiedJustNow": {
+    "message": "Copied just now"
+  },
+  "copiedTimeAgo": {
+    "message": "Copied $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "5 minutes ago"
+      }
+    }
+  },
   "confirmIdentity": {
     "message": "Confirm your identity to continue."
   },

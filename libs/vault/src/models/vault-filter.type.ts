@@ -5,7 +5,8 @@ import { ITreeNodeObject } from "@bitwarden/common/vault/models/domain/tree-node
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 import { BitwardenIcon } from "@bitwarden/components";
 
-export type CipherStatus = "all" | "favorites" | "archive" | "trash" | CipherType;
+export type CipherStatus =
+  "all" | "favorites" | "verificationCodes" | "archive" | "trash" | CipherType;
 
 export type CipherTypeFilter = ITreeNodeObject & { type: CipherStatus; icon?: BitwardenIcon };
 export type CollectionFilter = CollectionAdminView & {

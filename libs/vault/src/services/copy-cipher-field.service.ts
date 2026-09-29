@@ -16,6 +16,7 @@ import {
 import { ToastService } from "@bitwarden/components";
 
 import { PasswordRepromptService } from "./password-reprompt.service";
+import { TotpUsageService } from "./totp-usage.service";
 
 /**
  * The types of fields that can be copied from a cipher.
@@ -149,6 +150,7 @@ export class CopyCipherFieldService {
     private i18nService: I18nService,
     private billingAccountProfileStateService: BillingAccountProfileStateService,
     private accountService: AccountService,
+    private totpUsageService: TotpUsageService,
   ) {}
 
   /**
@@ -197,6 +199,13 @@ export class CopyCipherFieldService {
       message: this.i18nService.t("valueCopied", this.i18nService.t(action.typeI18nKey)),
       title: "",
     });
+
+    if (actionType === "totp" && cipher.id) {
+      const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+      if (activeAccount?.id) {
+        await this.totpUsageService.recordUsage(activeAccount.id, uuidAsString(cipher.id));
+      }
+    }
 
     if (action.event !== undefined) {
       await this.eventCollectionService.collect(
